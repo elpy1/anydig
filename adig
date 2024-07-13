@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -o nounset -o pipefail -o errexit
+. dns_vars.sh
+
+die() { echo "[${0##*/}] $*" >&2; exit 1; }
+usage() {
+  echo "Get as many DNS records as possible."
+  echo
+  echo "Usage: ${0##*/} <domain> [@server]"
+}
+
+_dig() {
+  dig "$@" | sed -n '/;; ANSWER SECTION/,/^$/p' | sed '1d' | sed '/^$/d'
+}
+
+main() {
+  local t
+  for t in "${RRTYPES[@]}"; do
+    _dig -t "TYPE${t}" $@
+  done
+}
+
+(( $# > 0 )) && (( $# <= 2 )) || die "$(usage)"
+main "$@"
